@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Live Stream Overlay</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+    .overlay-container {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 15px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    .overlay-container img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    .text-content h2 {
+      margin: 0 0 5px 0;
+      font-size: 20px;
+    }
+    .text-content p {
+      margin: 0;
+      font-size: 14px;
+      color: #ccc;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="overlay" class="overlay-container hidden">
+    <img id="overlay-img" src="" alt="">
+    <div class="text-content">
+      <h2 id="overlay-field1"></h2>
+      <p id="overlay-field2"></p>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwmLvFNJvle5De-KJpBTBLpgw2k2RlE_klW7lEkS8OwNi1T5g5GSqMvPhSm2aO3jm5u/exec';
+
+    async function fetchOverlayData() {
+      try {
+        const response = await fetch(SCRIPT_URL);
+        const data = await response.json();
+        
+        // Find the row where Is_Active is true or matches "TRUE"
+        const activeItem = data.find(row => 
+          row.Is_Active === true || String(row.Is_Active).toUpperCase() === 'TRUE'
+        );
+
+        const overlay = document.getElementById('overlay');
+
+        if (activeItem) {
+          document.getElementById('overlay-field1').textContent = activeItem.Field_One || '';
+          document.getElementById('overlay-field2').textContent = activeItem.Field_Two || '';
+          
+          const img = document.getElementById('overlay-img');
+          if (activeItem.Image_URL) {
+            img.src = activeItem.Image_URL;
+            img.style.display = 'block';
+          } else {
+            img.style.display = 'none';
+          }
+
+          overlay.classList.remove('hidden');
+        } else {
+          overlay.classList.add('hidden');
+        }
+      } catch (error) {
+        console.error('Error fetching overlay data:', error);
+      }
+    }
+
+    // Fetch immediately and then poll every 5 seconds
+    fetchOverlayData();
+    setInterval(fetchOverlayData, 5000);
+  </script>
+</body>
+</html>
