@@ -50,68 +50,45 @@
 <body>
 
   <div class="overlay-box" id="overlayContainer">
-    <div id="field1Display"></div>
+    <div id="field1Display">Waiting for control panel...</div>
     <div id="field2Display"></div>
     <img id="imageDisplay" src="" alt="Overlay Image">
   </div>
 
   <script>
     function renderOverlay() {
-      const params = new URLSearchParams(window.location.search);
-      let field1 = "", field2 = "", imageUrl = "", isVisible = true;
+      const rawData = localStorage.getItem('obs_overlay_data');
+      if (!rawData) return;
 
-      // Check if URL parameters exist
-      if (params.has('f1') || params.has('f2') || params.has('img')) {
-        field1 = params.get('f1') || '';
-        field2 = params.get('f2') || '';
-        imageUrl = params.get('img') || '';
-        isVisible = params.get('vis') !== '0';
-      } else {
-        // Fallback to localStorage for browser tabs
-        const rawData = localStorage.getItem('obs_overlay_data');
-        if (rawData) {
-          try {
-            const data = JSON.parse(rawData);
-            field1 = data.field1 || '';
-            field2 = data.field2 || '';
-            imageUrl = data.imageUrl || '';
-            isVisible = data.isVisible !== false;
-          } catch (e) {
-            console.error("Error parsing storage data:", e);
-          }
+      try {
+        const data = JSON.parse(rawData);
+
+        // Update text fields dynamically
+        document.getElementById('field1Display').textContent = data.field1 || '';
+        document.getElementById('field2Display').textContent = data.field2 || '';
+
+        // Handle image
+        const imgElement = document.getElementById('imageDisplay');
+        if (data.imageUrl && data.imageUrl.trim() !== "") {
+          imgElement.src = data.imageUrl;
+          imgElement.style.display = 'block';
+        } else {
+          imgElement.style.display = 'none';
         }
+
+        // Handle visibility toggle
+        const container = document.getElementById('overlayContainer');
+        container.style.display = data.isVisible !== false ? 'block' : 'none';
+      } catch (err) {
+        console.error("Error reading overlay data:", err);
       }
-
-      // Update text fields
-      document.getElementById('field1Display').textContent = field1;
-      document.getElementById('field2Display').textContent = field2;
-
-      // Handle image
-      const imgElement = document.getElementById('imageDisplay');
-      if (imageUrl && imageUrl.trim() !== "") {
-        imgElement.src = imageUrl;
-        imgElement.style.display = 'block';
-      } else {
-        imgElement.style.display = 'none';
-      }
-
-      // Handle container visibility
-      const container = document.getElementById('overlayContainer');
-      container.style.display = isVisible ? 'block' : 'none';
     }
 
-    // Load immediately on open
+    // Check storage immediately on load
     window.addEventListener('DOMContentLoaded', renderOverlay);
 
-    // Listen for storage changes from local tabs
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'obs_overlay_data') {
-        renderOverlay();
-      }
-    });
-
-    // Poll every second to keep sync
-    setInterval(renderOverlay, 1000);
+    // Poll every 500ms so OBS catches changes instantly without needing a page refresh
+    setInterval(renderOverlay, 500);
   </script>
 </body>
 </html>
