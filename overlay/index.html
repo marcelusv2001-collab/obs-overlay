@@ -1,1 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Live Stream Overlay Output</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: Arial, sans-serif;
+      color: white;
+      overflow: hidden;
+    }
+    .overlay-container {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      padding: 15px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      max-width: 500px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .overlay-container.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .overlay-container img {
+      width: 106px; /* 4:3 aspect ratio */
+      height: 80px;
+      object-fit: cover;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .text-content h2 {
+      margin: 0 0 5px 0;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+    .text-content p {
+      margin: 0;
+      font-size: 14px;
+      color: #ccc;
+      line-height: 1.3;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="overlay" class="overlay-container">
+    <img id="overlay-img" src="" alt="" style="display: none;">
+    <div class="text-content">
+      <h2 id="overlay-field1"></h2>
+      <p id="overlay-field2"></p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // Same Firebase config object as above
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    function formatImageUrl(url) {
+      if (!url) return '';
+      let strUrl = String(url).trim();
+      const driveMatch = strUrl.match(/\/d\/([^\/]+)/) || strUrl.match(/id=([^&]+)/);
+      if (driveMatch && driveMatch[1] && (strUrl.includes('drive.google.com') || strUrl.includes('docs.google.com'))) {
+        return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
+      }
+      return strUrl;
+    }
+
+    const overlay = document.getElementById('overlay');
+    const field1 = document.getElementById('overlay-field1');
+    const field2 = document.getElementById('overlay-field2');
+    const img = document.getElementById('overlay-img');
+
+    // Real-time listener: triggers instantly when controller sends data
+    onValue(ref(db, 'overlayState'), (snapshot) => {
+      const data = snapshot.val();
+      if (!data || !data.isVisible) {
+        overlay.classList.remove('show');
+        return;
+      }
+
+      field1.textContent = data.field1 || '';
+      field2.textContent = data.field2 || '';
+
+      const formattedImg = formatImageUrl(data.imageUrl);
+      if (formattedImg) {
+        img.src = formattedImg;
+        img.style.display = 'block';
+      } else {
+        img.style.display = 'none';
+      }
+
+      overlay.classList.add('show');
+    });
+  </script>
+</body>
+</html>
 
