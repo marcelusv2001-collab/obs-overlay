@@ -2,289 +2,120 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Stream Overlay Control Panel</title>
+  <title>Stream Controller</title>
   <style>
-    :root {
-      --bg-color: #121214;
-      --card-bg: #1a1a1e;
-      --border-color: #2e2e36;
-      --accent-color: #00bcd4;
-      --accent-hover: #00acc1;
-      --text-main: #ffffff;
-      --text-muted: #a1a1aa;
-      --success: #10b981;
-      --danger: #ef4444;
-    }
     body {
       margin: 0;
       padding: 20px;
-      background: var(--bg-color);
+      background: #121214;
       font-family: Arial, sans-serif;
-      color: var(--text-main);
+      color: #fff;
       display: flex;
       justify-content: center;
-      align-items: center;
-      min-height: 100vh;
     }
-    .control-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
+    .panel {
+      background: #1a1a1e;
+      border: 1px solid #2e2e36;
       padding: 25px;
       border-radius: 12px;
       width: 100%;
-      max-width: 480px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      max-width: 440px;
     }
-    h2 {
-      margin-top: 0;
-      font-size: 22px;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    h2 { margin-top: 0; border-bottom: 1px solid #2e2e36; padding-bottom: 10px; font-size: 20px; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 13px; color: #a1a1aa; margin-bottom: 6px; font-weight: bold; }
+    input[type="text"] {
+      width: 100%; padding: 10px; background: #0f0f11; border: 1px solid #2e2e36;
+      border-radius: 6px; color: #fff; box-sizing: border-box; font-size: 14px;
     }
-    .status-indicator {
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 4px;
-      background: #333;
-      color: var(--text-muted);
+    .toggle-row {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #0f0f11; padding: 12px; border-radius: 6px; border: 1px solid #2e2e36;
     }
-    .status-indicator.active {
-      background: rgba(16, 185, 129, 0.2);
-      color: var(--success);
-    }
-    .form-group {
-      margin-bottom: 18px;
-    }
-    label {
-      display: block;
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-      font-weight: bold;
-    }
-    input[type="text"], textarea {
-      width: 100%;
-      padding: 10px 12px;
-      background: #0f0f11;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      color: var(--text-main);
-      font-size: 14px;
-      box-sizing: border-box;
-      transition: border-color 0.2s;
-    }
-    input[type="text"]:focus, textarea:focus {
-      outline: none;
-      border-color: var(--accent-color);
-    }
-    .toggle-container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #0f0f11;
-      border: 1px solid var(--border-color);
-      padding: 12px;
-      border-radius: 6px;
-    }
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 50px;
-      height: 24px;
-    }
-    .switch input { 
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #3f3f46;
-      transition: .3s;
-      border-radius: 24px;
-    }
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 18px;
-      width: 18px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      transition: .3s;
-      border-radius: 50%;
-    }
-    input:checked + .slider {
-      background-color: var(--success);
-    }
-    input:checked + .slider:before {
-      transform: translateX(26px);
-    }
-    .btn-group {
-      display: flex;
-      gap: 10px;
-      margin-top: 25px;
-    }
+    .btn-group { display: flex; gap: 10px; margin-top: 20px; }
     button {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      font-size: 14px;
-      cursor: pointer;
-      transition: background 0.2s;
+      flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;
     }
-    .btn-save {
-      background: var(--accent-color);
-      color: #000;
-    }
-    .btn-save:hover {
-      background: var(--accent-hover);
-    }
-    .btn-hide {
-      background: #27272a;
-      color: var(--text-main);
-    }
-    .btn-hide:hover {
-      background: #3f3f46;
-    }
-    #toast {
-      margin-top: 15px;
-      text-align: center;
-      font-size: 13px;
-      min-height: 18px;
-      color: var(--success);
-    }
+    .btn-save { background: #00bcd4; color: #000; }
+    .btn-hide { background: #27272a; color: #fff; }
+    #status { margin-top: 12px; text-align: center; font-size: 13px; color: #10b981; min-height: 18px; }
   </style>
 </head>
 <body>
 
-  <div class="control-card">
-    <h2>
-      Overlay Controller
-      <span id="conn-status" class="status-indicator">Connecting...</span>
-    </h2>
+  <div class="panel">
+    <h2>Stream Overlay Control</h2>
 
     <div class="form-group">
-      <label for="field-one">Field One (Header / Title)</label>
-      <input type="text" id="field-one" placeholder="e.g. Finals Match - Table 1">
+      <label>Field One (Header)</label>
+      <input type="text" id="field1" placeholder="e.g. Finals Match - Table 1">
     </div>
 
     <div class="form-group">
-      <label for="field-two">Field Two (Subtext / Details)</label>
-      <input type="text" id="field-two" placeholder="e.g. Player A vs Player B">
+      <label>Field Two (Subtext)</label>
+      <input type="text" id="field2" placeholder="e.g. Player A vs Player B">
     </div>
 
     <div class="form-group">
-      <label for="image-url">Image URL or Google Drive Link</label>
-      <input type="text" id="image-url" placeholder="Paste image link here...">
+      <label>Image URL</label>
+      <input type="text" id="imageUrl" placeholder="Paste direct image or Google Drive link">
     </div>
 
     <div class="form-group">
-      <div class="toggle-container">
-        <span>Show Overlay on Stream</span>
-        <label class="switch">
-          <input type="checkbox" id="active-toggle">
-          <span class="slider"></span>
-        </label>
+      <div class="toggle-row">
+        <span>Display Overlay</span>
+        <input type="checkbox" id="visibleToggle" style="width: 20px; height: 20px;">
       </div>
     </div>
 
     <div class="btn-group">
-      <button class="btn-hide" id="clear-btn">Clear / Hide</button>
-      <button class="btn-save" id="save-btn">Push to Live</button>
+      <button class="btn-hide" onclick="clearOverlay()">Hide / Clear</button>
+      <button class="btn-save" onclick="updateOverlay()">Push Live</button>
     </div>
 
-    <div id="toast"></div>
+    <div id="status"></div>
   </div>
 
-  <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwmLvFNJvle5De-KJpBTBLpgw2k2RlE_klW7lEkS8OwNi1T5g5GSqMvPhSm2aO3jm5u/exec';
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    const fieldOneInput = document.getElementById('field-one');
-    const fieldTwoInput = document.getElementById('field-two');
-    const imageUrlInput = document.getElementById('image-url');
-    const activeToggle = document.getElementById('active-toggle');
-    const connStatus = document.getElementById('conn-status');
-    const toast = document.getElementById('toast');
+    // Insert your Firebase config object here
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
 
-    let currentDataRowId = null; // Tracks row index if your backend supports updating by index
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    async function loadCurrentData() {
-      try {
-        const response = await fetch(SCRIPT_URL, { redirect: 'follow' });
-        const data = await response.json();
-        
-        if (Array.isArray(data) && data.length > 0) {
-          // Grab the first active row or the first row as default template
-          const activeItem = data.find(row => {
-            const val = row.Is_Active || row.is_active;
-            return val === true || String(val).toUpperCase() === 'TRUE' || val === 1;
-          }) || data[0];
+    window.updateOverlay = function() {
+      const status = document.getElementById('status');
+      status.textContent = "Updating...";
 
-          fieldOneInput.value = activeItem.Field_One || activeItem.field_one || '';
-          fieldTwoInput.value = activeItem.Field_Two || activeItem.field_two || '';
-          imageUrlInput.value = activeItem.Image_URL || activeItem.image_url || '';
-          
-          const isActive = activeItem.Is_Active || activeItem.is_active;
-          activeToggle.checked = (isActive === true || String(isActive).toUpperCase() === 'TRUE' || isActive === 1);
+      set(ref(db, 'overlayState'), {
+        field1: document.getElementById('field1').value,
+        field2: document.getElementById('field2').value,
+        imageUrl: document.getElementById('imageUrl').value,
+        isVisible: document.getElementById('visibleToggle').checked
+      }).then(() => {
+        status.textContent = "Live Stream Updated!";
+        setTimeout(() => status.textContent = "", 2500);
+      }).catch(err => {
+        status.textContent = "Error updating database.";
+        console.error(err);
+      });
+    };
 
-          connStatus.textContent = "Online";
-          connStatus.classList.add('active');
-        }
-      } catch (err) {
-        console.error('Connection error:', err);
-        connStatus.textContent = "Offline / Error";
-        connStatus.classList.remove('active');
-      }
-    }
-
-    async function sendData(setIsActiveOverride = null) {
-      toast.textContent = "Saving changes...";
-      
-      const payload = {
-        Field_One: fieldOneInput.value,
-        Field_Two: fieldTwoInput.value,
-        Image_URL: imageUrlInput.value,
-        Is_Active: setIsActiveOverride !== null ? setIsActiveOverride : activeToggle.checked
-      };
-
-      try {
-        // Sends POST payload to Google Apps Script backend
-        await fetch(SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors', // standard workaround for Google Apps Script web app POST endpoints
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        toast.textContent = "Successfully updated overlay!";
-        setTimeout(() => { toast.textContent = ""; }, 3000);
-      } catch (err) {
-        console.error('Save error:', err);
-        toast.textContent = "Error saving changes.";
-        toast.style.color = "var(--danger)";
-      }
-    }
-
-    document.getElementById('save-btn').addEventListener('click', () => sendData());
-    
-    document.getElementById('clear-btn').addEventListener('click', () => {
-      fieldOneInput.value = '';
-      fieldTwoInput.value = '';
-      imageUrlInput.value = '';
-      activeToggle.checked = false;
-      sendData(false);
-    });
-
-    // Initial load
-    loadCurrentData();
+    window.clearOverlay = function() {
+      document.getElementById('visibleToggle').checked = false;
+      window.updateOverlay();
+    };
   </script>
 </body>
 </html>
