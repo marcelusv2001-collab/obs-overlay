@@ -7,7 +7,8 @@
     body {
       margin: 0;
       padding: 0;
-      background: transparent;
+      /* If testing in a normal browser, change 'transparent' to '#222' to see the window */
+      background: transparent; 
       font-family: Arial, sans-serif;
       color: white;
     }
@@ -23,10 +24,9 @@
       gap: 15px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
       max-width: 500px;
-      transition: opacity 0.3s ease-in-out;
     }
     .overlay-container img {
-      width: 106px; /* 4:3 aspect ratio display */
+      width: 106px;
       height: 80px;
       object-fit: cover;
       border-radius: 4px;
@@ -46,9 +46,25 @@
     .hidden {
       display: none !important;
     }
+    /* Temporary debug badge so you know the script is running */
+    #debug-badge {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #0ff;
+      padding: 5px 10px;
+      font-size: 11px;
+      border-radius: 4px;
+      z-index: 9999;
+      font-family: monospace;
+    }
   </style>
 </head>
 <body>
+
+  <!-- Debug badge helps you see status in real time -->
+  <div id="debug-badge">Initializing...</div>
 
   <div id="overlay" class="overlay-container hidden">
     <img id="overlay-img" src="" alt="Overlay Image" style="display: none;">
@@ -60,8 +76,8 @@
 
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwmLvFNJvle5De-KJpBTBLpgw2k2RlE_klW7lEkS8OwNi1T5g5GSqMvPhSm2aO3jm5u/exec';
+    const debugBadge = document.getElementById('debug-badge');
 
-    // Helper function to safely read object properties regardless of casing/spacing
     function getProp(obj, targetKey) {
       if (!obj) return undefined;
       const key = Object.keys(obj).find(
@@ -70,7 +86,6 @@
       return key ? obj[key] : undefined;
     }
 
-    // Converts Google Drive share links into direct view URLs
     function formatImageUrl(url) {
       if (!url) return '';
       let strUrl = String(url).trim();
@@ -83,12 +98,16 @@
 
     async function fetchOverlayData() {
       try {
+        debugBadge.textContent = "Fetching data...";
         const response = await fetch(SCRIPT_URL, { redirect: 'follow' });
         const data = await response.json();
         
-        if (!Array.isArray(data)) return;
+        if (!Array.isArray(data)) {
+          debugBadge.textContent = "Error: Data is not an array";
+          debugBadge.style.color = "#ff5555";
+          return;
+        }
 
-        // Find the active row matching 'is_active'
         const activeItem = data.find(row => {
           const val = getProp(row, 'is_active');
           return val === true || String(val).trim().toUpperCase() === 'TRUE' || val === 1 || val === '1';
@@ -98,6 +117,9 @@
         const img = document.getElementById('overlay-img');
 
         if (activeItem) {
+          debugBadge.textContent = "Status: Showing Active Item";
+          debugBadge.style.color = "#55ff55";
+
           document.getElementById('overlay-field1').textContent = getProp(activeItem, 'field_one') || getProp(activeItem, 'field1') || '';
           document.getElementById('overlay-field2').textContent = getProp(activeItem, 'field_two') || getProp(activeItem, 'field2') || '';
           
@@ -113,10 +135,14 @@
 
           overlay.classList.remove('hidden');
         } else {
+          debugBadge.textContent = "Status: Connected (No row has Is_Active = TRUE)";
+          debugBadge.style.color = "#ffaa00";
           overlay.classList.add('hidden');
         }
       } catch (error) {
         console.error('Error fetching overlay data:', error);
+        debugBadge.textContent = "Error: Check Console (F12)";
+        debugBadge.style.color = "#ff5555";
       }
     }
 
