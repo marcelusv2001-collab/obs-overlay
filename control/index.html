@@ -38,6 +38,16 @@
     }
     .btn-save { background: #00bcd4; color: #000; }
     .btn-hide { background: #27272a; color: #fff; }
+    .url-box {
+      margin-top: 20px;
+      background: #0f0f11;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #2e2e36;
+      word-break: break-all;
+    }
+    .url-box label { margin-bottom: 4px; color: #00bcd4; }
+    .url-text { font-size: 11px; color: #a1a1aa; font-family: monospace; }
     #status { margin-top: 12px; text-align: center; font-size: 13px; color: #10b981; min-height: 18px; }
   </style>
 </head>
@@ -64,7 +74,7 @@
     <div class="form-group">
       <div class="toggle-row">
         <span>Display Overlay</span>
-        <input type="checkbox" id="visibleToggle" style="width: 20px; height: 20px;">
+        <input type="checkbox" id="visibleToggle" checked style="width: 20px; height: 20px;">
       </div>
     </div>
 
@@ -74,6 +84,11 @@
     </div>
 
     <div id="status"></div>
+
+    <div class="url-box">
+      <label>OBS Direct Browser Source URL:</label>
+      <div id="obsUrlDisplay" class="url-text">Click "Push Live" to generate URL</div>
+    </div>
   </div>
 
   <script>
@@ -81,24 +96,29 @@
       const status = document.getElementById('status');
       status.textContent = "Updating...";
 
-      const overlayData = {
-        field1: document.getElementById('field1').value,
-        field2: document.getElementById('field2').value,
-        imageUrl: document.getElementById('imageUrl').value,
-        isVisible: document.getElementById('visibleToggle').checked,
-        timestamp: Date.now()
-      };
+      const f1 = document.getElementById('field1').value;
+      const f2 = document.getElementById('field2').value;
+      const img = document.getElementById('imageUrl').value;
+      const vis = document.getElementById('visibleToggle').checked;
 
-      try {
-        // Saves locally so the overlay tab or OBS browser source picks it up instantly
-        localStorage.setItem('obs_overlay_data', JSON.stringify(overlayData));
-        
-        status.textContent = "Live Stream Updated!";
-        setTimeout(() => status.textContent = "", 2500);
-      } catch (err) {
-        status.textContent = "Error saving data.";
-        console.error(err);
-      }
+      // 1. Save to localStorage for browser tabs
+      const overlayData = { field1: f1, field2: f2, imageUrl: img, isVisible: vis, timestamp: Date.now() };
+      localStorage.setItem('obs_overlay_data', JSON.stringify(overlayData));
+
+      // 2. Generate Direct URL for OBS Browser Source
+      const baseUrl = "https://marcelusv2001-collab.github.io/obs-overlay/overlay/";
+      const queryParams = new URLSearchParams({
+        f1: f1,
+        f2: f2,
+        img: img,
+        vis: vis ? "1" : "0"
+      });
+      
+      const fullObsUrl = `${baseUrl}?${queryParams.toString()}`;
+      document.getElementById('obsUrlDisplay').textContent = fullObsUrl;
+
+      status.textContent = "Live Stream Updated!";
+      setTimeout(() => status.textContent = "", 2500);
     };
 
     window.clearOverlay = function() {
