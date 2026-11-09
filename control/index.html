@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Stream Controller</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #121214;
+      font-family: Arial, sans-serif;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+    }
+    .panel {
+      background: #1a1a1e;
+      border: 1px solid #2e2e36;
+      padding: 25px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 440px;
+    }
+    h2 { margin-top: 0; border-bottom: 1px solid #2e2e36; padding-bottom: 10px; font-size: 20px; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 13px; color: #a1a1aa; margin-bottom: 6px; font-weight: bold; }
+    input[type="text"] {
+      width: 100%; padding: 10px; background: #0f0f11; border: 1px solid #2e2e36;
+      border-radius: 6px; color: #fff; box-sizing: border-box; font-size: 14px;
+    }
+    .toggle-row {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #0f0f11; padding: 12px; border-radius: 6px; border: 1px solid #2e2e36;
+    }
+    .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+    button {
+      flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;
+    }
+    .btn-save { background: #00bcd4; color: #000; }
+    .btn-hide { background: #27272a; color: #fff; }
+    #status { margin-top: 12px; text-align: center; font-size: 13px; color: #10b981; min-height: 18px; }
+  </style>
+</head>
+<body>
+
+  <div class="panel">
+    <h2>Stream Overlay Control</h2>
+
+    <div class="form-group">
+      <label>Field One (Header)</label>
+      <input type="text" id="field1" placeholder="e.g. Finals Match - Table 1">
+    </div>
+
+    <div class="form-group">
+      <label>Field Two (Subtext)</label>
+      <input type="text" id="field2" placeholder="e.g. Player A vs Player B">
+    </div>
+
+    <div class="form-group">
+      <label>Image URL</label>
+      <input type="text" id="imageUrl" placeholder="Paste direct image or Google Drive link">
+    </div>
+
+    <div class="form-group">
+      <div class="toggle-row">
+        <span>Display Overlay</span>
+        <input type="checkbox" id="visibleToggle" style="width: 20px; height: 20px;">
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn-hide" onclick="clearOverlay()">Hide / Clear</button>
+      <button class="btn-save" onclick="updateOverlay()">Push Live</button>
+    </div>
+
+    <div id="status"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // Insert your Firebase config object here
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    window.updateOverlay = function() {
+      const status = document.getElementById('status');
+      status.textContent = "Updating...";
+
+      set(ref(db, 'overlayState'), {
+        field1: document.getElementById('field1').value,
+        field2: document.getElementById('field2').value,
+        imageUrl: document.getElementById('imageUrl').value,
+        isVisible: document.getElementById('visibleToggle').checked
+      }).then(() => {
+        status.textContent = "Live Stream Updated!";
+        setTimeout(() => status.textContent = "", 2500);
+      }).catch(err => {
+        status.textContent = "Error updating database.";
+        console.error(err);
+      });
+    };
+
+    window.clearOverlay = function() {
+      document.getElementById('visibleToggle').checked = false;
+      window.updateOverlay();
+    };
+  </script>
+</body>
+</html>
