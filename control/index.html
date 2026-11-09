@@ -76,40 +76,29 @@
     <div id="status"></div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-    // Insert your Firebase config object here
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-      projectId: "YOUR_PROJECT",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "SENDER_ID",
-      appId: "APP_ID"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
+  <script>
     window.updateOverlay = function() {
       const status = document.getElementById('status');
       status.textContent = "Updating...";
 
-      set(ref(db, 'overlayState'), {
+      const overlayData = {
         field1: document.getElementById('field1').value,
         field2: document.getElementById('field2').value,
         imageUrl: document.getElementById('imageUrl').value,
-        isVisible: document.getElementById('visibleToggle').checked
-      }).then(() => {
+        isVisible: document.getElementById('visibleToggle').checked,
+        timestamp: Date.now()
+      };
+
+      try {
+        // Saves locally so the overlay tab or OBS browser source picks it up instantly
+        localStorage.setItem('obs_overlay_data', JSON.stringify(overlayData));
+        
         status.textContent = "Live Stream Updated!";
         setTimeout(() => status.textContent = "", 2500);
-      }).catch(err => {
-        status.textContent = "Error updating database.";
+      } catch (err) {
+        status.textContent = "Error saving data.";
         console.error(err);
-      });
+      }
     };
 
     window.clearOverlay = function() {
